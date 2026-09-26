@@ -11,6 +11,7 @@ export default function AppLayout() {
       }}
     >
       <Stack.Screen name="dashboard" />
+      <Stack.Screen name="player" />
     </Stack>
   );
 }

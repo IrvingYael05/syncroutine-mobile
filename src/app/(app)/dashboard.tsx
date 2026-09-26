@@ -17,6 +17,7 @@ import {
   BloqueDto,
 } from "@/context/services/api/bloques.service";
 import { useRouter } from "expo-router";
+import CustomModal from "@/components/CustomModal";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -26,7 +27,19 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Estado para el modal de error
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "error" as const,
+  });
+
   const nombreUsuario = user?.user_metadata?.nombre || "Usuario";
+
+  const showError = (title: string, message: string) => {
+    setModalConfig({ visible: true, title, message, type: "error" });
+  };
 
   const cargarBloques = async () => {
     if (!user?.id) return;
@@ -35,6 +48,10 @@ export default function DashboardScreen() {
       setBloques(data);
     } catch (error) {
       console.error("Error cargando los bloques:", error);
+      showError(
+        "Error de Sincronización",
+        "No se pudieron cargar tus bloques. Verifica tu conexión a internet.",
+      );
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -142,6 +159,16 @@ export default function DashboardScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* MODAL DE ERROR */}
+      <CustomModal
+        visible={modalConfig.visible}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText="Entendido"
+        onConfirm={() => setModalConfig({ ...modalConfig, visible: false })}
+      />
     </SafeAreaView>
   );
 }

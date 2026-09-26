@@ -19,6 +19,7 @@ import {
   ActividadDto,
 } from "@/context/services/api/actividades.service";
 import { HistorialService } from "@/context/services/api/historial.service";
+import CustomModal from "@/components/CustomModal";
 
 export default function PlayerScreen() {
   useKeepAwake();
@@ -31,6 +32,14 @@ export default function PlayerScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "error" as const,
+  });
 
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -38,6 +47,10 @@ export default function PlayerScreen() {
   const startTimeRef = useRef<number | null>(null);
   const accumulatedTimeRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const showError = (title: string, message: string) => {
+    setModalConfig({ visible: true, title, message, type: "error" });
+  };
 
   const cargarActividades = async () => {
     try {
@@ -48,6 +61,10 @@ export default function PlayerScreen() {
       setActividades(ordenadas);
     } catch (error) {
       console.error("Error al cargar actividades:", error);
+      showError(
+        "Error de Carga",
+        "No pudimos descargar las actividades de este bloque.",
+      );
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -89,15 +106,16 @@ export default function PlayerScreen() {
   const registrarYContinuar = async () => {
     if (!user?.id || actividades.length === 0) return;
 
-    const actividadActual = actividades[currentIndex];
     setIsRunning(false);
+    setIsSaving(true);
+
+    const actividadActual = actividades[currentIndex];
 
     try {
       await HistorialService.registrarActividad({
         userId: user.id,
         actividadId: actividadActual.id,
         tiempoRealSegundos: elapsedSeconds,
-        fechaCompletado: new Date().toISOString(),
       });
 
       if (currentIndex < actividades.length - 1) {
@@ -108,6 +126,12 @@ export default function PlayerScreen() {
       }
     } catch (error) {
       console.error("Error registrando historial:", error);
+      showError(
+        "Error de Guardado",
+        "Hubo un problema registrando tu tiempo. Inténtalo de nuevo.",
+      );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -133,7 +157,6 @@ export default function PlayerScreen() {
     );
   }
 
-  // ESTADO VACÍO CON SCROLL PARA RECARGAR
   if (actividades.length === 0) {
     return (
       <ScrollView
@@ -166,6 +189,14 @@ export default function PlayerScreen() {
             Volver al Dashboard
           </Text>
         </TouchableOpacity>
+        <CustomModal
+          visible={modalConfig.visible}
+          type={modalConfig.type}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          confirmText="Entendido"
+          onConfirm={() => setModalConfig({ ...modalConfig, visible: false })}
+        />
       </ScrollView>
     );
   }
@@ -180,7 +211,7 @@ export default function PlayerScreen() {
           onPress={() => router.back()}
           style={localStyles.backButton}
         >
-          <Icon name="close" size={28} color={Colors.textMuted} />
+          <Icon name="arrow-back" size={28} color={Colors.textMuted} />
         </TouchableOpacity>
         <Text style={localStyles.progressText}>
           {currentIndex + 1} / {actividades.length}
@@ -209,11 +240,11 @@ export default function PlayerScreen() {
           </Text>
         </View>
 
-        {/* CONTROLES EN FILA */}
         <View style={localStyles.controlsContainer}>
           <TouchableOpacity
             style={[localStyles.controlButton, localStyles.playPauseButton]}
             onPress={toggleTimer}
+            disabled={isSaving}
           >
             <Icon
               name={isRunning ? "pause" : "play"}
@@ -229,11 +260,12 @@ export default function PlayerScreen() {
               localStyles.dangerButton,
             ]}
             onPress={registrarYContinuar}
+            disabled={isSaving || elapsedSeconds === 0}
           >
             <Icon
               name={
                 currentIndex === actividades.length - 1
-                  ? "stop"
+                  ? "send-sharp"
                   : "arrow-redo-sharp"
               }
               size={40}
@@ -242,6 +274,24 @@ export default function PlayerScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {isSaving && (
+        <View style={localStyles.processingOverlay}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={localStyles.processingText}>
+            Registrando progreso...
+          </Text>
+        </View>
+      )}
+
+      <CustomModal
+        visible={modalConfig.visible}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText="Entendido"
+        onConfirm={() => setModalConfig({ ...modalConfig, visible: false })}
+      />
     </SafeAreaView>
   );
 }
@@ -284,10 +334,12 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   targetTime: { color: Colors.textMuted, fontSize: 16, marginBottom: 50 },
+
   timerCircle: {
     width: 280,
     height: 280,
     borderRadius: 140,
+    backgroundColor: Colors.background,
     borderWidth: 8,
     borderColor: Colors.primary,
     justifyContent: "center",
@@ -311,12 +363,11 @@ const localStyles = StyleSheet.create({
   },
   timerTextOvertime: { color: Colors.danger },
 
-  // AJUSTES DE CONTROLES
   controlsContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 30, // Espaciado entre los dos botones
+    gap: 30,
     width: "100%",
   },
   controlButton: { justifyContent: "center", alignItems: "center" },
@@ -331,8 +382,18 @@ const localStyles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  dangerButton: {
-    backgroundColor: Colors.danger,
-    shadowColor: Colors.danger,
+  dangerButton: { backgroundColor: Colors.danger, shadowColor: Colors.danger },
+  processingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(15, 23, 42, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  processingText: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 15,
   },
 });

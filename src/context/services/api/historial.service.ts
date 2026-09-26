@@ -5,7 +5,7 @@ export interface HistorialDto {
   userId: string; // UUID
   actividadId: string; // UUID
   tiempoRealSegundos: number;
-  fechaCompletado: string; // ISO 8601 String
+  fechaCompletado?: string; // ISO 8601 String
 }
 
 export const HistorialService = {
