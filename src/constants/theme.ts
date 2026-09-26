@@ -1,65 +1,53 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import '@/global.css';
-
-import { Platform } from 'react-native';
+import { StyleSheet } from "react-native";
 
 export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
-} as const;
+  primary: "#10b981", // Emerald 500
+  primaryHover: "#059669", // Emerald 600
+  background: "#0f172a", // Slate 900
+  surface: "#1e293b", // Slate 800
+  text: "#f8fafc", // Slate 50
+  textMuted: "#94a3b8", // Slate 400
+  danger: "#ef4444", // Red 500
+};
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
-
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+export const globalStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: Colors.text,
+    marginBottom: 10,
+    textAlign: "center",
   },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
+  subtitle: {
+    fontSize: 16,
+    color: Colors.textMuted,
+    textAlign: "center",
+    marginBottom: 40,
+    paddingHorizontal: 20,
+  },
+  primaryButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    width: "100%",
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  buttonText: {
+    color: "#000000",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
-
-export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
-} as const;
-
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
