@@ -1,56 +1,101 @@
-# Welcome to your Expo app 👋
+# SyncRoutine Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SyncRoutine Mobile es el cliente nativo del ecosistema **SyncRoutine**, diseñado para actuar como un ejecutor inteligente (estilo *Smartwatch*) de rutinas y bloques de tareas. La aplicación permite a los usuarios desvincularse de la plataforma web, ofreciendo una experiencia inmersiva para la gestión del tiempo con sincronización bidireccional, persistencia criptográfica y tolerancia a fallos de red.
 
-## Get started
+---
 
-1. Install dependencies
+## Características Principales
 
-   ```bash
-   npm install
-   ```
+- **Emparejamiento Passwordless (Host-Client):** Inicio de sesión seguro mediante escaneo de código QR nativo, eliminando la fricción de ingresar credenciales manualmente.
+- **Sincronización en Tiempo Real:** Descarga instantánea de bloques de tareas y actividades desde el backend empresarial.
+- **Motor de Tiempo Resiliente:** Cronómetro de alta precisión basado en marcas de tiempo (`Date.now()`) que continúa calculando el progreso de forma exacta incluso si la aplicación pasa a segundo plano.
+- **Gestión Inteligente de Energía:** Forzado automático de pantalla activa (`keep-awake`) durante la ejecución de rutinas para evitar interrupciones.
+- **Interfaz "Card-Based" Inmersiva:** Navegación híbrida con un diseño minimalista adaptado a los estándares *Edge-to-Edge* americanos.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Stack Tecnológico y Arquitectura
 
-In the output, you'll find options to open the app in a
+El proyecto está construido bajo el paradigma de **Programación Funcional**, garantizando inmutabilidad y un flujo de datos unidireccional.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Framework:** React Native + Expo (SDK 57)
+- **Lenguaje:** TypeScript
+- **Gestión de Estado Global:** Context API (`AuthContext`)
+- **Autenticación y Sesiones:** Supabase (JWT)
+- **Persistencia Segura:** Expo Secure Store (Keychain/Keystore nativo)
+- **Integración de Hardware:** Expo Camera
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Arquitectura de Carpetas (Separación de Responsabilidades)
+El proyecto utiliza una arquitectura modular que separa estrictamente la lógica de red (Servicios) de las vistas (UI):
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+├── app/                  # Rutas y Vistas (Expo Router)
+│   ├── (auth)/           # Grupo de rutas de autenticación (QR Scanner)
+│   └── (app)/            # Grupo de rutas protegidas (Dashboard, Player)
+├── components/           # Componentes UI reutilizables (CustomModal, Cards)
+├── constants/            # Sistema de diseño global (theme.ts, Colors)
+├── context/              # Estados globales (AuthContext)
+└── core/
+    └── services/         # Capa de red (API Client, Endpoints, Supabase)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Instalación y Configuración Local
+### Prerrequisitos
+- Node.js (v18 o superior)
+- Entorno de desarrollo móvil (Android Studio / Xcode) o la app Expo Go en tu dispositivo físico.
+- Backend de Spring Boot activo en la red local o en la nube.
 
-### Other setup steps
+### Pasos de despliegue
+- Clonar el repositorio:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```Bash
+git clone https://github.com/IrvingYael05/syncroutine-mobile.git
+cd syncroutine-mobile
+```
 
-## Learn more
+- Instalar dependencias:
+```Bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+- Configurar variables de entorno:
+Crea un archivo .env en la raíz del proyecto y define las variables de conexión hacia el backend de Spring Boot y Supabase:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+``` Fragmento de código
+EXPO_PUBLIC_API_URL=http://TUP_IP_LOCAL:8080
+EXPO_PUBLIC_SUPABASE_URL=tu_url_de_supabase
+EXPO_PUBLIC_SUPABASE_ANON_KEY=tu_llave_anonima
+```
 
-## Join the community
+- Levantar el servidor de desarrollo:
 
-Join our community of developers creating universal apps.
+``` Bash
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Compilación para Producción (APK)
+La aplicación está configurada para compilarse en la nube utilizando EAS Build. Para generar un archivo instalable .apk para Android:
+
+- Instalar la interfaz de comandos de EAS:
+
+```Bash
+npm install -g eas-cli
+```
+
+- Ejecutar el perfil de compilación preview:
+
+```Bash
+eas build -p android --profile preview
+```
+
+## Prácticas de Seguridad Implementadas
+- **Aislamiento de Lógica de Red:** Las peticiones HTTP se interceptan en una capa de servicios (apiClient.ts), centralizando la inyección de Bearer Tokens.
+
+- **Protección contra Inyección y Fugas (Logcat):** Los JWT (Access y Refresh Tokens) jamás se imprimen en consola.
+
+- **Manejo Seguro de Errores:** Excepciones de red (404, Timeout) son atrapadas y presentadas al usuario mediante retroalimentación visual genérica, ocultando la estructura interna del servidor.
+
+- **Guards de Navegación:** El enrutador (_layout.tsx) bloquea el retroceso hacia las pantallas de autenticación una vez que la sesión criptográfica ha sido validada.
+
+Desarrollado para el ecosistema SyncRoutine.
