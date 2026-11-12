@@ -9,6 +9,7 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/context/supabase/supabase";
 import { User } from "@supabase/supabase-js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -57,12 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!token || !refreshToken) return;
 
       // Inyectamos los tokens generados por Spring Boot hacia Supabase
-      const { error } = await supabase.auth.setSession({
+      const { error, data } = await supabase.auth.setSession({
         access_token: token,
         refresh_token: refreshToken,
       });
 
       if (error) throw error;
+
+      if (data.session) {
+        await AsyncStorage.setItem("widget_token", token);
+        await AsyncStorage.setItem("widget_userId", data.session.user.id);
+      }
+
+      console.log("Sesión inyectada en Supabase:", data.session);
     } catch (error) {
       console.error("Error inyectando sesión en Supabase:", error);
     }
@@ -71,6 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+
+      await AsyncStorage.removeItem("widget_token");
+      await AsyncStorage.removeItem("widget_userId");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }

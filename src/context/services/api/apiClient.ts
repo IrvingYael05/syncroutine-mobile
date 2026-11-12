@@ -4,8 +4,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 /**
  * Función global para hacer peticiones HTTP inyectando automáticamente
- * el token de acceso de Supabase en los Headers, replicando la función
- * del auth-interceptor.ts de tu proyecto web.
+ * el token de acceso de Supabase en los Headers.
  */
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   // Obtenemos la sesión fresca de Supabase
@@ -30,7 +29,7 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     throw new Error(`Error API: ${response.status} - ${response.statusText}`);
   }
 
-  // Si no hay contenido (ej. un DELETE 204), no intentamos parsear JSON
+  // Si no hay contenido, no intentamos parsear JSON
   if (response.status === 204) {
     return null;
   }

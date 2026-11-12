@@ -2,7 +2,7 @@
   "expo": {
     "name": "SyncRoutine",
     "slug": "syncroutine-mobile",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "syncroutinemobile",
@@ -34,7 +34,23 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "SyncRoutineWidget",
+              "label": "Métricas SyncRoutine",
+              "minWidth": "260dp",
+              "minHeight": "110dp",
+              "description": "Resumen rápido de tu productividad",
+              "previewImage": "./assets/icon.png"
+            }
+          ],
+          "fonts": ["./assets/fonts/MaterialIcons.ttf"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
